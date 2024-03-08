@@ -51,8 +51,8 @@ def searchRedSquare(image):
             # Approximate the contour to a simpler polygon with fewer vertices
             approx = cv2.approxPolyDP(cnt, 0.01 * cv2.arcLength(cnt, True), True)
 
-            # Check if the contour is a quadrilateral (4 vertices) and its area is above a threshold
-            if len(approx) == 4 and area > 1000:
+            # Check if the contour is a quadrilateral (4 vertices)
+            if len(approx) == 4:
                 # Get the bounding rectangle of the contour
                 x, y, w, h = cv2.boundingRect(cnt)
 
@@ -77,7 +77,6 @@ def searchRedSquare(image):
                     # Rectangle
                     # Draw contours around the detected rectangle in red color
                     cv2.drawContours(image, [approx], 0, (0, 255, 0), 3)
-
             elif len(approx) == 6:
                 # Cortado en una esquina
                 print("Esto cortado en una esquina")
