@@ -50,7 +50,6 @@ def searchRedSquare(image):
 
             # Approximate the contour to a simpler polygon with fewer vertices
             approx = cv2.approxPolyDP(cnt, 0.01 * cv2.arcLength(cnt, True), True)
-            print(approx)
 
             # Check if the contour is a quadrilateral (4 vertices) and its area is above a threshold
             if len(approx) == 4 and area > 1000:
@@ -69,10 +68,16 @@ def searchRedSquare(image):
                     #   (localizar que esquina y hacer el desplazamiento hacia arriba/abajo izquierda/derecha)
                     # Draw contours around the detected square in green color
                     cv2.drawContours(image, [approx], 0, (0, 255, 0), 3)
+
+                    square = approx
+                    shape = "square"
+
+                    return square, shape
                 else:
                     # Rectangle
                     # Draw contours around the detected rectangle in red color
                     cv2.drawContours(image, [approx], 0, (0, 255, 0), 3)
+
             elif len(approx) == 6:
                 # Cortado en una esquina
                 print("Esto cortado en una esquina")
@@ -123,6 +128,7 @@ def calculateDistanceAndOrientation(image, square):
 
     return distance, angle
 
+
 def showResults(x, y, z):
     movement = ""
 
@@ -146,7 +152,6 @@ def main():
     for i in range(1, total_images, 1):
         image_path = "Practica_OpenCV/entrada" + str(i) + ".jpg"
         image = cv2.imread(image_path)
-        height, width = image.shape[:2]
 
         searchRedSquare(image)
 
