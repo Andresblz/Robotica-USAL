@@ -1,162 +1,215 @@
 import cv2
 import numpy as np
 
-total_images = 7
-target_distance = 30  
-angulo_tolerancia = 10
+target_distance = 30
 
 def searchRedSquare(image):
-    """
-    Function to search for red shapes in an image, clasify and draw contours around them.
-
-    Parameters:
-    image : A NumPy array representing the image.
-        Input image in BGR color format.
-
-    Returns: 
-    """
-
-    # Convert the image from BGR color space to HSV (Hue, Saturation, Value) / HSB (Hue, Saturation, Brightness) color space
-    # ---
-    # HSV color model is often used in computer vision and image processing 
-    # tasks because it separates the color information from the brightness 
-    # information, making it easier to work with color-based segmentation and 
-    # analysis. (https://docs.opencv.org/4.x/frame.jpg)
+    x = y = z = None
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
-    # Define the lower and upper bounds for red color in HSV
     lower_red = np.array([0, 100, 100])
     upper_red = np.array([10, 255, 255])
-
-    # Create a mask to filter out red regions in the image
     mask = cv2.inRange(hsv, lower_red, upper_red)
-
-    # Find contours in the mask image
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # Check if contours were found
-    if len(contours) == 0: # No contours
-        result = searchQR(image)
-
-        if result is None:
-            showResults(None, None, None)
-        else:
-            showResults(None, None, -1)
+    if len(contours) == 0: 
+        if existQR(image): # Comprobar si hay cuadrados negros en la imagen para retroceder o decir que no hay QR
+            z = -1
     else:
-        # Iterate through each contour found in the image
         for cnt in contours:
-            # Calculate the area of the contour
-            area = cv2.contourArea(cnt)
-
-            # Approximate the contour to a simpler polygon with fewer vertices
             approx = cv2.approxPolyDP(cnt, 0.01 * cv2.arcLength(cnt, True), True)
 
-            # Check if the contour is a quadrilateral (4 vertices)
-            if len(approx) == 4:
-                # Get the bounding rectangle of the contour
+            if len(approx) == 4: 
                 x, y, w, h = cv2.boundingRect(cnt)
-
-                # Calculate the aspect ratio of the bounding rectangle
                 ratio = float(w) / h
-
-                # Check if the aspect ratio indicates a square
-                if ratio >= 0.9 and ratio <= 1.1:
-                    # Square
-                    # Comprobar si hay más información además del rojo
-                    #   Si hay más información el cuadrado está completo
-                    #   Si no hay más información está cortado en una de las esquinas 
-                    #   (localizar que esquina y hacer el desplazamiento hacia arriba/abajo izquierda/derecha)
-                    # Draw contours around the detected square in green color
+                if ratio >= 0.9 and ratio <= 1.1: # Si es un cuadrado
                     cv2.drawContours(image, [approx], 0, (0, 255, 0), 3)
-
-                    square = approx
-                    shape = "square"
-
-                    return square, shape
-                else:
-                    # Rectangle
-                    # Draw contours around the detected rectangle in red color
+                    x, y = position(image, approx, len(approx))
+                    if existQR(image):
+                        z = calculateDistance(approx)
+                else: # Si es un rectangulo
+                    # con el ratio y rect comprobamos si es vertical (true) u horizontal (false)
+                    ratio = float(w) / h
                     cv2.drawContours(image, [approx], 0, (0, 255, 0), 3)
-            elif len(approx) == 6:
-                # Cortado en una esquina
-                print("Esto cortado en una esquina")
-            elif len(approx) == 8:
-                # Cortado en un lateral
-                print("Estoy cortado")
+                    rect = True if ratio >= 0.9 and ratio <= 1.1 else False
 
-    return
+                    if existQR(image):
+                        x, y = searchQRPosition(image, rect) # Comprobamos donde está la mayor parte del QR y decimos que retroceda
+                        z = -1
+                    else:
+                        x, y = position(image, approx, len(approx)) # No hay QR, buscamos solo la posición del rectangulo
+            elif len(approx) == 6: # Está cortada en una esquina
+                cv2.drawContours(image, [approx], 0, (0, 255, 0), 3)
+                x, y = position(image, approx, len(approx))
+            elif len(approx) == 8: # Esta cortado en un lateral
+                cv2.drawContours(image, [approx], 0, (0, 255, 0), 3)
+                x, y = position(image, approx, len(approx))
+    
+    showResults(x, y, z)
 
-def searchQR(image):
+def existQR(image):
+    contours = searchContoursQR(image)
+    
+    if len(contours) > 0:
+        return True
+    
+    return False
 
-    return
+def searchQRPosition(image, rect):
+    height, width, _ = image.shape
+    x = y = None
+    contours = searchContoursQR(image)
 
-def calculateDistanceAndOrientation(image, square):
-    """
-    Calculates the distance and orientation of a square relative to the center of an image.
+    left_area = right_area = top_area = bottom_area = 0
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        x, y, w, h = cv2.boundingRect(contour)
+        if x + w < width / 2:
+            left_area += area
+        elif x > width / 2:
+            right_area += area
+        if y + h < height / 2:
+            top_area += area
+        elif y > height / 2:
+            bottom_area += area
 
-    Args:
-        image: A NumPy array representing the image.
-        square: A NumPy array representing the contour of a square found in the image.
+    if rect:
+        x = -1 if left_area > right_area else 1
+    else:
+        y = -1 if bottom_area > top_area else 1
 
-    Returns:
-        A tuple containing two elements:
-            - distance (float): The calculated distance of the square's center from the image center.
-            - angle (float): The calculated orientation of the square in degrees, with 0 degrees 
-                             pointing to the right and increasing counter-clockwise.
-    """
+    return x, y
 
-    # Calculate moments of the square contour
+def searchContoursQR(image):
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lower_black = np.array([0, 0, 0])
+    upper_black = np.array([180, 255, 30])
+    mask = cv2.inRange(hsv, lower_black, upper_black)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return contours
+
+def position(image, approx, type):
+    height, width, _ = image.shape
+    halfHeight = height / 2
+    halfWidth = width / 2
+    x = y = 0
+
+    if type == 4: # El cuadrado
+        xapprox = (approx[0][0][0] + approx [2][0][0]) / 2 
+        yapprox = (approx[0][0][1] + approx [1][0][1]) / 2
+
+        if (halfHeight + 5) < yapprox and (halfHeight - 5) < yapprox:
+            y = -1
+        elif (halfHeight + 5) > yapprox and (halfHeight - 5) > yapprox:
+            y = 1
+
+        if (halfWidth + 5) < xapprox and (halfWidth - 5) < xapprox:
+            x = 1
+        elif (halfWidth + 5) > xapprox and (halfWidth - 5) > xapprox:
+            x = -1
+
+    elif type == 6: # Cortado por la esquina
+        firstX = approx[0][0][0]
+        firstY = approx[0][0][1]
+        secondX = approx[3][0][0]
+        secondY = approx[3][0][1]
+
+        if firstY == 0 and secondX == 0:
+            x = -1
+            y = 1
+        elif firstY == 0 and secondX == width-1:
+            x = 1
+            y = 1
+        elif firstX == 0 and secondY == height-1:
+            x = -1
+            y = -1
+        elif firstX == width-1 and secondY == height-1: 
+            x = 1
+            y = -1
+    else: # Cortado en un lateral
+        move = (approx[0][0][0])
+
+        if move == 0: # Si la x de 0 vale 0 entramos aquí y comparamos los puntos 6 y 7
+            x = -1
+            yapprox = (approx[7][0][1] + approx[6][0][1]) / 2
+            if (halfHeight + 5) < yapprox and (halfHeight - 5) < yapprox:
+                y = -1
+            elif (halfHeight + 5) > yapprox and (halfHeight - 5) > yapprox:
+                y = 1
+        else:   # Si la x de 0 vale 1 entramos aquí y comparamos los puntos 0 y 1
+            x = 1
+            yapprox = (approx[0][0][1] + approx[1][0][1]) / 2
+            if (halfHeight + 5) < yapprox and (halfHeight - 5) < yapprox:
+                y = -1
+            elif (halfHeight + 5) > yapprox and (halfHeight - 5) > yapprox:
+                print(yapprox)
+                y = 1
+
+    return x, y
+
+def calculateDistance(square):
+    z = None
+
     moments = cv2.moments(square)
-
-    # Calculate the centroid (center) of the square based on moments
-    centro_x = int(moments["m10"] / moments["m00"])
-    centro_y = int(moments["m01"] / moments["m00"])
-
-    # Calculate the radius of the circle that can be inscribed inside the square
     radius = int(np.sqrt(moments["mu20"] / moments["m00"]))
-
-    # Calculate the distance of the square's center from the image center
-    # Use a target distance and scale it based on the inscribed circle radius
     distance = (target_distance * radius) / 25
 
-    # Calculate the orientation of the square relative to the image center
-    # Use arctangent2 to handle both positive and negative coordinates
-    angle = np.arctan2(centro_y - image.shape[0] / 2, centro_x - image.shape[1] / 2)
-    # Convert the angle from radians to degrees
-    angle = np.rad2deg(angle)
-
-    return distance, angle
-
+    # A la target_distance le damos un +- 5 de error para alejarse o acercarse
+    z = -1 if distance > target_distance + 5 else (1 if distance < target_distance - 5 else 0)
+    return z
 
 def showResults(x, y, z):
     movement = ""
 
-    if x is None and y is None and z is None:
-        movement = "No QR found on the image."
-    elif x is None and y is None and z is -1:
+    if x == None and y == None and z == None:
+        movement = "No se ha encontrado ningún QR."
+    elif (x == None or x == 0) and (y == None or y == 0) and z == -1:
         movement = "Retroceder."
+    elif x == 0 or x == None and y == 0 or y == None and z == 0:
+        movement = "OK. Quieto."
     else:
-        # Movimiento en x
-        if x is -1:
-            movement = "Mover a la izquierda"
-        # Avanzar / Retroceder
+        movement = "Mover"
+        if x == -1:
+            movement += " a la izquierda"
+        elif x == 1:
+            movement += " a la derecha"
 
-        # Izquierda / Derecha y/o Arriba / Abajo
+        if y != 0 and z != None:
+            movement += ","
+        elif y != 0 and z == None:
+            movement += " y"
 
+        if y == -1:
+            movement += " abajo"
+        elif y == 1:
+            movement += " arriba"
+
+        if z == -1:
+            movement += " y retroceder"
+        elif z == 1:
+            movement += " y avanzar"
+
+        movement += "."
 
     print(movement)
     return
 
 def main():
-    for i in range(1, total_images, 1):
+    total_images = 18
+    for i in range(1, total_images):
         image_path = "Practica_OpenCV/entrada" + str(i) + ".jpg"
-        image = cv2.imread(image_path)
+        try:
+            image = cv2.imread(image_path)
+            if image is None:
+                print(f"Error: No se pudo cargar la imagen {image_path}")
+                continue
 
-        searchRedSquare(image)
+            searchRedSquare(image)
 
-        cv2.imshow("Red Shapes", image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+            cv2.imshow("Red Shapes", image)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+        except Exception as e:
+            print(f"Error: {e}")
 
 if __name__ == "__main__":
     main()
