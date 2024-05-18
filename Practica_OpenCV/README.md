@@ -180,7 +180,7 @@ def getSquarePosition(approx, half_width, half_height):
     x_approx = (approx[0][0][0] + approx[2][0][0]) / 2
     y_approx = (approx[0][0][1] + approx[1][0][1]) / 2
     x = -1 if x_approx < half_width - 5 else (1 if x_approx > half_width + 5 else 0)
-    y = -1 if y_approx < half_height - 5 else (1 if y_approx > half_height + 5 else 0)
+    y = 1 if y_approx < half_height - 5 else (-1 if y_approx > half_height + 5 else 0)
     return x, y
 ```
 
