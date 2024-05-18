@@ -37,7 +37,7 @@ Un robot móvil que navega por un entorno de oficinas equipado con un sistema de
 
 Ejemplo:
 ```bash
-python main.py
+python3 main.py
 ```
 
 ## Planteamiento
