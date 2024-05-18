@@ -222,7 +222,6 @@ def calculateDistance(square):
     Returns:
         int: Distance evaluation (-1 if too far, 0 if within acceptable range, 1 if too close).
     """
-    moments
     moments = cv2.moments(square)
     radius = int(np.sqrt(moments["mu20"] / moments["m00"]))
     distance = (TARGET_DISTANCE * radius) / 25
