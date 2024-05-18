@@ -266,7 +266,7 @@ def showResults(x, y, z):
 
         movement += "."
 
-    print("\n\n", movement, "\n\n")
+    print(movement)
 
 def main():
     """
