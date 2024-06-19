@@ -1,4 +1,4 @@
-# Práctica Odometría
+# Practica Odometría
 
 ## Índice
 - [Introducción](#introducción)

@@ -5,12 +5,12 @@ Se deberá realizar un programa (lenguaje de programación a elección de entre 
 Para ello:
 - Es necesario que proporcionéis unas características físicas al robot: Dimensiones, separación de las ruedas, diámetro de las ruedas (puede haber una pequeña diferencia entre ellas), resolución del encoder (número de incrementos por cada giro completo de la rueda)
 - Los cálculos de la odometría se basan en las medidas de los encoders asociados a los motores de las ruedas (Es obligatorio que se realicen los cálculos, no se puede utilizar ninguna biblioteca que la realice, por ejemplo, no se puede utilizar el Turtle de Python). Para simular los valores que nos proporcionaría un robot real utilizareis algún dispositivo de entrada (teclado, ventana interactiva con botones, o con la posición del ratón, etc) con el que se simulara algún movimiento del robot en un intervalo de tiempo. Por ejemplo, si utilizamos el teclado como dispositivo de entrada (teclas u, i, o, j, k, l) un posibilidad es:
-    - Tecla i: avanza en línea recta, los dos encoders proporcionan el mimo valor 10 (p.e. depende de las características que pongáis) (las dos ruedas avanzan lo mismo). También, si queréis pueden ser uno 9 y otro 10, no se mueven exactamente a la misma velocidad por ser motores diferentes.
-    - Tecla k: retrocede en línea recta, los dos encoders proporcionan el mismo valor -10 (p.e. depende de las características que pongáis) (las dos ruedas retroceden lo mismo).
-    - Letra j: gira sobre si miso hacia la izquierda. Los dos encoders proporcionan valores opuestos rueda derecha 10 y rueda izquierda -10
-    - Letra l: gira sobre si mismo hacia la derecha. Los dos encoders proporcionan valores opuestos rueda derecha -10 y rueda izquierda 10
-    - Letra u: avanza realizado un pequeño giro hacia la izquierda. Los dos encoders proporcionan valores positivos diferentes, rueda derecha 10 y rueda izquierda 3
-    - Letra o: avanza realizado un pequeño giro hacia la derecha. Los dos encoders proporcionan valores positivos diferentes, rueda derecha 3 y rueda izquierda 10
+    - Tecla `i`: avanza en línea recta, los dos encoders proporcionan el mimo valor 10 (p.e. depende de las características que pongáis) (las dos ruedas avanzan lo mismo). También, si queréis pueden ser uno 9 y otro 10, no se mueven exactamente a la misma velocidad por ser motores diferentes.
+    - Tecla `k`: retrocede en línea recta, los dos encoders proporcionan el mismo valor -10 (p.e. depende de las características que pongáis) (las dos ruedas retroceden lo mismo).
+    - Letra `j`: gira sobre si miso hacia la izquierda. Los dos encoders proporcionan valores opuestos rueda derecha 10 y rueda izquierda -10
+    - Letra `l`: gira sobre si mismo hacia la derecha. Los dos encoders proporcionan valores opuestos rueda derecha -10 y rueda izquierda 10
+    - Letra `u`: avanza realizado un pequeño giro hacia la izquierda. Los dos encoders proporcionan valores positivos diferentes, rueda derecha 10 y rueda izquierda 3
+    - Letra `o`: avanza realizado un pequeño giro hacia la derecha. Los dos encoders proporcionan valores positivos diferentes, rueda derecha 3 y rueda izquierda 10
 
 No es necesario pero si recomendable para poder analizar los resultados que algunos de los parámetros sean configurables. Por ejemplo, los diámetros de las ruedas diferentes, para poder comprobar el efecto de los errores sistemáticos. Es decir, la posición que nos daría si los suponemos iguales con respecto la posición si sabemos que hay diferencias entre ellos.
 
